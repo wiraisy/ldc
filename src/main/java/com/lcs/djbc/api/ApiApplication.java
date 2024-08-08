@@ -21,7 +21,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.file.Paths;
@@ -36,21 +35,37 @@ public class ApiApplication {
     private static final Logger log = LogManager.getLogger(ApiApplication.class);
     private static final String name = "LCS_DJBC_";
 
+    // PATH =================================
+    // SOURCE PATH
+    private static final String source = "D:\\AKBAR WIRAISY\\workspace2\\Project\\execute\\";
+    // BACKUP PATH
+    private static final String backup = "D:\\AKBAR WIRAISY\\workspace2\\Project\\Hasil\\BACKUP2\\";
+    // READ PATH
+    private static final String read = "D:\\AKBAR WIRAISY\\workspace2\\Project\\Hasil\\BACKUP\\";
+    // OUTPUT PATH
+    private static final String output = "D:\\AKBAR WIRAISY\\workspace2\\Project\\Hasil\\";
+
     public static void main(String[] args) throws IOException {
         SpringApplication.run(ApiApplication.class, args);
         lds();
     }
 
     private static void lds() throws IOException {
-        //test koneksi
+        //connection test
         if(!testkoneksi()){
             System.out.println("Koneksi Bermasalah atau Endpoint Bermasalah");
         }else {
-            //define path source
+            //define the path source
             String filename = name + sdf.format(new Date());
-            File file = new File("D:\\AKBAR WIRAISY\\workspace2\\Project\\execute\\" + filename);
-            file.renameTo(new File("D:\\AKBAR WIRAISY\\workspace2\\Project\\Hasil\\BACKUP\\" + filename + ".xlsx"));
-            File path = Paths.get("D:\\AKBAR WIRAISY\\workspace2\\Project\\Hasil\\BACKUP\\" + filename + ".xlsx").toFile();
+            File file = new File(source + filename);
+            if(file.exists()){
+                //back up file path
+                file.renameTo(new File(backup + filename + ".xlsx"));
+                //copy file from backup to read folder
+                copyFile(new File(backup+filename+".xlsx"), new File(read+filename+".xlsx"));
+            }
+            //file to read after
+            File path = Paths.get(read+filename+".xlsx").toFile();
             if (path.exists()) {
                 FileInputStream fis = new FileInputStream(path);
                 XSSFWorkbook workbook = new XSSFWorkbook(fis);
@@ -93,7 +108,7 @@ public class ApiApplication {
                     Response mo = restTemplate.postForEntity(url, request, Response.class).getBody();
                     //===================================================
                     //devine the output stream
-                    FileOutputStream fout = new FileOutputStream("D:\\AKBAR WIRAISY\\workspace2\\Project\\Hasil\\" + kode + ".txt");
+                    FileOutputStream fout = new FileOutputStream( output + kode + ".txt");
                     //convert json from djbc api response to String
                     String out = new Gson().toJson(mo);
                     //converting string into byte array
@@ -106,6 +121,7 @@ public class ApiApplication {
                     System.out.println("BERHASIL");
                 }
                 file.delete();
+                path.delete();
             } else {
                 System.out.println("file tidak ditemukan");
             }
@@ -113,19 +129,31 @@ public class ApiApplication {
     }
 
 
+    //connection test method
     public static Boolean testkoneksi() {
         try {
-            URL url = new URL("https://vsahjsvajhs.go.id");
+            URL url = new URL("https://apis-gw.beacukai.go.id/interchange/SendDataLcs");
             URLConnection connection = url.openConnection();
             connection.connect();
             System.out.println("Internet is connected");
             return true;
-        } catch (MalformedURLException e) {
-            System.out.println("Internet is not connected");
-            return false;
         } catch (IOException e) {
-            System.out.println("Internet is not connected");
             return false;
+        }
+    }
+
+    public final static int BUF_SIZE = 1024;
+
+    //copy file method
+    public static void copyFile(File in, File out) throws IOException {
+        try (FileInputStream fis = new FileInputStream(in); FileOutputStream fos = new FileOutputStream(out)) {
+            byte[] buf = new byte[BUF_SIZE];
+            int i;
+            while ((i = fis.read(buf)) != -1) {
+                fos.write(buf, 0, i);
+            }
+        } catch (Exception e) {
+            throw e;
         }
     }
 
