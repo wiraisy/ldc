@@ -21,6 +21,9 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLConnection;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -39,67 +42,90 @@ public class ApiApplication {
     }
 
     private static void lds() throws IOException {
-        //define path source
-        String filename = name + sdf.format(new Date());
-        File file = new File("D:\\AKBAR WIRAISY\\workspace2\\Project\\execute\\" + filename);
-        file.renameTo(new File("D:\\AKBAR WIRAISY\\workspace2\\Project\\Hasil\\BACKUP\\" + filename + ".xlsx"));
-        File path = Paths.get("D:\\AKBAR WIRAISY\\workspace2\\Project\\Hasil\\BACKUP\\" + filename + ".xlsx").toFile();
-        if (path.exists()) {
-            FileInputStream fis = new FileInputStream(path);
-            XSSFWorkbook workbook = new XSSFWorkbook(fis);
-            XSSFSheet sheet = workbook.getSheetAt(0);
-            for (int i = 1; i < sheet.getPhysicalNumberOfRows(); i++) {
-                XSSFRow row = sheet.getRow(i);
-                String kode = UUID.randomUUID() + "-" + sdf.format(new Date());
-                //===================================================
-                //filling the model value
-                RequestModels requestModels = new RequestModels();
-                requestModels.setIdPerusahaan(row.getCell(0).getStringCellValue());
-                requestModels.setNamaPerusahaan(row.getCell(1).getStringCellValue());
-                requestModels.setNomorInvoice(row.getCell(2).getStringCellValue());
-                requestModels.setTanggalInvoice(row.getCell(3).getStringCellValue());
-                requestModels.setKodeValuta(row.getCell(4).getStringCellValue());
-                requestModels.setNilaiTransaksi(row.getCell(5).getStringCellValue());
-                //===================================================
-                //define object mapper
-                ObjectMapper mapper = new ObjectMapper();
-                mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-                String url = "https://apis-gw.beacukai.go.id/interchange/SendDataLcs";
-                RestTemplate restTemplate = new RestTemplate();
-                // define header security
-                HttpHeaders headers = new HttpHeaders();
-                headers.setContentType(MediaType.APPLICATION_JSON);
-                headers.set("beacukai-api-key", "ea0207a0-0d60-4f25-b77c-b5de4638f39e");
-                //define json object
-                JsonObject jsonObject = new JsonObject();
-                jsonObject.addProperty("idPerusahaan", requestModels.getIdPerusahaan());
-                log.info(requestModels.getIdPerusahaan());
-                jsonObject.addProperty("namaPerusahaan", requestModels.getNamaPerusahaan());
-                log.info(requestModels.getNamaPerusahaan());
-                jsonObject.addProperty("nomorInvoice", requestModels.getNomorInvoice());
-                jsonObject.addProperty("tanggalInvoice", requestModels.getTanggalInvoice());
-                jsonObject.addProperty("nilaiTransaksi", requestModels.getNilaiTransaksi());
-                jsonObject.addProperty("kodeValuta", requestModels.getKodeValuta());
-                //combine json object with hader
-                HttpEntity<String> request = new HttpEntity<>(jsonObject.toString(), headers);
-                //catch response from post api and mapping to response model
-                Response mo = restTemplate.postForEntity(url, request, Response.class).getBody();
-                //===================================================
-                //devine the output stream
-                FileOutputStream fout = new FileOutputStream("D:\\AKBAR WIRAISY\\workspace2\\Project\\Hasil\\" + kode + ".txt");
-                //convert json from djbc api response to String
-                String out = new Gson().toJson(mo);
-                //converting string into byte array
-                byte er[] = out.getBytes();
-                //write byte to text file
-                fout.write(er);
-                //close buffer stream
-                fout.close();
-                //=============================
-                System.out.println("BERHASIL");
+        //test koneksi
+        if(!testkoneksi()){
+            System.out.println("Koneksi Bermasalah atau Endpoint Bermasalah");
+        }else {
+            //define path source
+            String filename = name + sdf.format(new Date());
+            File file = new File("D:\\AKBAR WIRAISY\\workspace2\\Project\\execute\\" + filename);
+            file.renameTo(new File("D:\\AKBAR WIRAISY\\workspace2\\Project\\Hasil\\BACKUP\\" + filename + ".xlsx"));
+            File path = Paths.get("D:\\AKBAR WIRAISY\\workspace2\\Project\\Hasil\\BACKUP\\" + filename + ".xlsx").toFile();
+            if (path.exists()) {
+                FileInputStream fis = new FileInputStream(path);
+                XSSFWorkbook workbook = new XSSFWorkbook(fis);
+                XSSFSheet sheet = workbook.getSheetAt(0);
+                for (int i = 1; i < sheet.getPhysicalNumberOfRows(); i++) {
+                    XSSFRow row = sheet.getRow(i);
+                    String kode = UUID.randomUUID() + "-" + sdf.format(new Date());
+                    //===================================================
+                    //filling the model value
+                    RequestModels requestModels = new RequestModels();
+                    requestModels.setIdPerusahaan(row.getCell(0).getStringCellValue());
+                    requestModels.setNamaPerusahaan(row.getCell(1).getStringCellValue());
+                    requestModels.setNomorInvoice(row.getCell(2).getStringCellValue());
+                    requestModels.setTanggalInvoice(row.getCell(3).getStringCellValue());
+                    requestModels.setKodeValuta(row.getCell(4).getStringCellValue());
+                    requestModels.setNilaiTransaksi(row.getCell(5).getStringCellValue());
+                    //===================================================
+                    //define object mapper
+                    ObjectMapper mapper = new ObjectMapper();
+                    mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+                    String url = "https://apis-gw.beacukai.go.id/interchange/SendDataLcs";
+                    RestTemplate restTemplate = new RestTemplate();
+                    // define header security
+                    HttpHeaders headers = new HttpHeaders();
+                    headers.setContentType(MediaType.APPLICATION_JSON);
+                    headers.set("beacukai-api-key", "ea0207a0-0d60-4f25-b77c-b5de4638f39e");
+                    //define json object
+                    JsonObject jsonObject = new JsonObject();
+                    jsonObject.addProperty("idPerusahaan", requestModels.getIdPerusahaan());
+                    log.info(requestModels.getIdPerusahaan());
+                    jsonObject.addProperty("namaPerusahaan", requestModels.getNamaPerusahaan());
+                    log.info(requestModels.getNamaPerusahaan());
+                    jsonObject.addProperty("nomorInvoice", requestModels.getNomorInvoice());
+                    jsonObject.addProperty("tanggalInvoice", requestModels.getTanggalInvoice());
+                    jsonObject.addProperty("nilaiTransaksi", requestModels.getNilaiTransaksi());
+                    jsonObject.addProperty("kodeValuta", requestModels.getKodeValuta());
+                    //combine json object with hader
+                    HttpEntity<String> request = new HttpEntity<>(jsonObject.toString(), headers);
+                    //catch response from post api and mapping to response model
+                    Response mo = restTemplate.postForEntity(url, request, Response.class).getBody();
+                    //===================================================
+                    //devine the output stream
+                    FileOutputStream fout = new FileOutputStream("D:\\AKBAR WIRAISY\\workspace2\\Project\\Hasil\\" + kode + ".txt");
+                    //convert json from djbc api response to String
+                    String out = new Gson().toJson(mo);
+                    //converting string into byte array
+                    byte er[] = out.getBytes();
+                    //write byte to text file
+                    fout.write(er);
+                    //close buffer stream
+                    fout.close();
+                    //=============================
+                    System.out.println("BERHASIL");
+                }
+                file.delete();
+            } else {
+                System.out.println("file tidak ditemukan");
             }
-        } else {
-            System.out.println("file tidak ditemukan");
+        }
+    }
+
+
+    public static Boolean testkoneksi() {
+        try {
+            URL url = new URL("https://vsahjsvajhs.go.id");
+            URLConnection connection = url.openConnection();
+            connection.connect();
+            System.out.println("Internet is connected");
+            return true;
+        } catch (MalformedURLException e) {
+            System.out.println("Internet is not connected");
+            return false;
+        } catch (IOException e) {
+            System.out.println("Internet is not connected");
+            return false;
         }
     }
 
