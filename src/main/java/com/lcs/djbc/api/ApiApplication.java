@@ -11,8 +11,10 @@ import org.apache.logging.log4j.Logger;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -34,16 +36,18 @@ public class ApiApplication {
     private static final SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
     private static final Logger log = LogManager.getLogger(ApiApplication.class);
     private static final String name = "LCS_DJBC_";
+    @Autowired
+    private static ConfigurableApplicationContext context;
 
     // PATH =================================
     // SOURCE PATH
-    private static final String source = "D:\\AKBAR WIRAISY\\workspace2\\Project\\execute\\";
+    private static final String source = "\\\\dc1filesvr04\\BI_DJBC\\";
     // BACKUP PATH
-    private static final String backup = "D:\\AKBAR WIRAISY\\workspace2\\Project\\Hasil\\BACKUP2\\";
+    private static final String backup = "D:\\ldc\\backup\\";
     // READ PATH
-    private static final String read = "D:\\AKBAR WIRAISY\\workspace2\\Project\\Hasil\\BACKUP\\";
+    private static final String read = "D:\\ldc\\read\\";
     // OUTPUT PATH
-    private static final String output = "D:\\AKBAR WIRAISY\\workspace2\\Project\\Hasil\\";
+    private static final String output = "D:\\ldc\\output\\";
 
     public static void main(String[] args) throws IOException {
         SpringApplication.run(ApiApplication.class, args);
@@ -53,10 +57,12 @@ public class ApiApplication {
     private static void lds() throws IOException {
         //connection test
         if(!testkoneksi()){
-            System.out.println("Koneksi Bermasalah atau Endpoint Bermasalah");
+            log.info("KONEKSI BERMASALAH");
+            System.out.println("KONEKSI BERMASALAH");
         }else {
             //define the path source
             String filename = name + sdf.format(new Date());
+            //create new file with path
             File file = new File(source + filename);
             if(file.exists()){
                 //back up file path
@@ -117,13 +123,20 @@ public class ApiApplication {
                     fout.write(er);
                     //close buffer stream
                     fout.close();
+                    //=========
+                    log.info("BERHASIL");
                     //=============================
                     System.out.println("BERHASIL");
                 }
+                //DELETE FILE
                 file.delete();
                 path.delete();
+                //CLOSE APP
+                System.exit(SpringApplication.exit(context));
             } else {
-                System.out.println("file tidak ditemukan");
+                System.out.println("FILE NOT FOUND");
+                //=========================================
+                log.info("FILE NOT FOUND");
             }
         }
     }
@@ -135,7 +148,7 @@ public class ApiApplication {
             URL url = new URL("https://apis-gw.beacukai.go.id/interchange/SendDataLcs");
             URLConnection connection = url.openConnection();
             connection.connect();
-            System.out.println("Internet is connected");
+            System.out.println("API is connected");
             return true;
         } catch (IOException e) {
             return false;
